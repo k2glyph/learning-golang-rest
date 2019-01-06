@@ -14,4 +14,9 @@ var routes = Routes{
 		"/",
 		HandlerWrap{hello},
 	},
+	Route{
+		"POST",
+		"/payment",
+		HandlerWrap{payment},
+	},
 }
