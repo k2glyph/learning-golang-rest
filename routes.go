@@ -16,7 +16,12 @@ var routes = Routes{
 	},
 	Route{
 		"POST",
-		"/payment",
-		HandlerWrap{payment},
+		"/payment/paypal",
+		HandlerWrap{PaymentFromPaypal},
+	},
+	Route{
+		"POST",
+		"/payment/stripe",
+		HandlerWrap{PaymentFromStripe},
 	},
 }

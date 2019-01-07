@@ -1,48 +1,52 @@
 package main
 
 import (
-	"fmt"
-
 	paypalsdk "github.com/logpacker/PayPal-Go-SDK"
 )
 
-func DirectPaypalPayment(c *gin.Context) {
-	client, err := SetAccessTokenForClient(ClientID, SecretID)
+func DirectPaypalPayment() {
+	c, err := paypalsdk.NewClient("AZfxEQ2LMtKTtkmHzUXIVcFrN_ddV0J-7EQ1SQc5Z1OrqqEB7RzxcMWKNrsOr-JO9C4H1IawgOyPhCQe", "secretID", paypalsdk.APIBaseSandBox)
 	if err != nil {
 		panic(err)
-		return
 	}
-	// create direct paypal payment
-	amount := paypalsdk.Amount{
-		Total:    "7.00",
-		Currency: "USD",
-	}
-	redirectURI := "http://example.com/redirect-uri"
-	cancelURI := "http://example.com/cancel-uri"
-	description := "Description for direct Paypal payment"
-	paymentResult, err := client.CreateDirectPaypalPayment(amount, redirectURI, cancelURI, description)
 
-	//fmt.Println(paymentResult)
-	c.JSON(200, gin.H{
-		Response: paymentResult,
-	})
-
-	// Execute approved payment
-	paymentID := paymentResult.ID
-	fmt.Println(paymentID)
-	// payerID := paymentResult.payer_id
-	// executeResult, err := c.ExecuteApprovedPayment(paymentID, payerID)
-
-}
-func SetAccessTokenForClient(clientId, secretId string) (client *paypalsdk.Client, err interface{}) {
-	client, err = paypalsdk.NewClient(clientId, secretId, paypalsdk.APIBaseSandBox)
+	// Retrieve access token
+	_, err = c.GetAccessToken()
 	if err != nil {
-		return client, err
+		panic(err)
 	}
-	accessToken, err := client.GetAccessToken()
+
+	// Create credit card payment
+	p := paypalsdk.Payment{
+		Intent: "sale",
+		Payer: &paypalsdk.Payer{
+			PaymentMethod: "credit_card",
+			FundingInstruments: []paypalsdk.FundingInstrument{{
+				CreditCard: &paypalsdk.CreditCard{
+					Number:      "4111111111111111",
+					Type:        "visa",
+					ExpireMonth: "11",
+					ExpireYear:  "2020",
+					CVV2:        "777",
+					FirstName:   "John",
+					LastName:    "Doe",
+				},
+			}},
+		},
+		Transactions: []paypalsdk.Transaction{{
+			Amount: &paypalsdk.Amount{
+				Currency: "USD",
+				Total:    "7.00",
+			},
+			Description: "My Payment",
+		}},
+		RedirectURLs: &paypalsdk.RedirectURLs{
+			ReturnURL: "http://...",
+			CancelURL: "http://...",
+		},
+	}
+	_, err = c.CreatePayment(p)
 	if err != nil {
-		return client, err
+		panic(err)
 	}
-	client.SetAccessToken(accessToken.Token)
-	return client, err
 }
